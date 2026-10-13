@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Картопля">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Картопляна енергія</title>
+<style>
+:root{--bg:#efe6d2;--panel:#f8f1e0;--ink:#2b2418;--mute:#7a6c52;--soil:#6b4a2b;--soil2:#8a6239;--leaf:#4f8a3a;--spud:#d9a441;--volt:#1f6fd1;--line:#d4c6a4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1913;--panel:#27231a;--ink:#f1e8d2;--mute:#a39676;--soil:#4a3320;--soil2:#5f4228;--leaf:#78b85c;--spud:#e8b64f;--volt:#6aa8ff;--line:#3b3526}}
+:root[data-theme="dark"]{--bg:#1c1913;--panel:#27231a;--ink:#f1e8d2;--mute:#a39676;--soil:#4a3320;--soil2:#5f4228;--leaf:#78b85c;--spud:#e8b64f;--volt:#6aa8ff;--line:#3b3526}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;line-height:1.4}
+main{max-width:920px;margin:0 auto;padding:14px}
+h1{font-family:Georgia,serif;font-size:1.6rem;margin:4px 0 12px}
+h2{font-size:1.05rem;margin:0 0 8px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:10px 14px}
+.stat b{display:block;font-family:Georgia,serif;font-size:1.7rem}
+.stat span{color:var(--mute);font-size:.85rem}
+.stat.e b{color:var(--volt)}.stat.m b{color:var(--leaf)}
+.cols{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+section{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:12px}
+button{font:inherit;color:inherit}
+.tb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tb button,.bar button,.sell,.tab{background:var(--bg);border:2px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer}
+.tb button.on,.tab.on{border-color:var(--volt);background:var(--volt);color:#fff}
+.sell{background:var(--volt);color:#fff;border-color:var(--volt);margin-top:6px}
+.field{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.plot{aspect-ratio:1;border:0;border-radius:10px;background:repeating-linear-gradient(90deg,var(--soil),var(--soil) 10px,var(--soil2) 10px,var(--soil2) 14px);color:#fff;font-size:1.6rem;cursor:pointer;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.plot i{position:absolute;left:0;bottom:0;height:5px;background:var(--leaf)}
+.plot.ready{box-shadow:0 0 0 3px var(--spud) inset}
+.plot small{position:absolute;top:3px;right:6px;font-size:.7rem}.plot .bug{position:absolute;top:2px;left:4px;font-size:1.2rem;font-weight:normal;animation:wig .6s infinite alternate}@keyframes wig{to{transform:rotate(18deg)}}@media(prefers-reduced-motion:reduce){.plot .bug{animation:none}}.plot .sh{position:absolute;right:4px;bottom:2px;font-size:.8rem;text-decoration:none}.wx{background:var(--panel);border:3px solid var(--line);border-radius:12px;padding:8px 14px;margin-bottom:12px}.wx small{color:var(--mute)}
+.plot em{position:absolute;left:4px;bottom:2px;font-size:.9rem;font-style:normal}
+.del .plot{cursor:crosshair}.plot *{pointer-events:none}
+.sp{display:inline-flex;align-items:center;justify-content:center;font-size:1.1rem;width:58%;height:46%;border-radius:55% 45% 50% 50%/60% 55% 45% 40%}
+.sp.sm{width:26px;height:20px;font-size:.7rem;vertical-align:middle}
+.hint{color:var(--mute);font-size:.85rem;margin:8px 0 0}
+.gens,.tanks{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.gen{width:52px;height:52px;border:0;border-radius:8px;background:var(--volt);opacity:.6;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.2rem;line-height:1;cursor:default}.gen small{font-size:.65rem}
+.gen.on{opacity:1;animation:pulse .5s infinite alternate}
+@keyframes pulse{to{filter:brightness(1.4)}}
+@media(prefers-reduced-motion:reduce){.gen.on{animation:none;outline:2px solid var(--spud)}}
+.tank{width:64px;height:84px;border:2px solid var(--line);border-radius:8px;background:var(--bg);position:relative;overflow:hidden;cursor:pointer;font-size:.75rem;padding:0}
+.tank i{position:absolute;left:0;right:0;bottom:0;background:var(--volt);opacity:.8}
+.tank span{position:relative;display:block;padding-top:4px;font-weight:bold}
+.tank.full{border-color:var(--spud)}
+.up{width:100%;text-align:left;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.up small{display:block;color:var(--mute)}
+.up .cost{font-family:Georgia,serif;font-weight:bold;color:var(--volt);white-space:nowrap}
+.up:disabled{opacity:.5;cursor:not-allowed}
+.up.sel{border-color:var(--volt)}
+.seed{cursor:default}.buys{display:flex;gap:4px}
+.buys button{background:var(--leaf);color:#fff;border:0;border-radius:8px;padding:5px 9px;cursor:pointer}
+.buys button:disabled{opacity:.4;cursor:not-allowed}
+.news{background:var(--spud);color:#2b2418;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-weight:bold}
+.cl{border:2px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--bg)}
+.cl.offer{border-color:var(--spud)}.cl.lock{opacity:.6}.cl small{display:block;color:var(--mute)}
+.cl button{margin-top:6px;background:var(--leaf);color:#fff;border:0;border-radius:8px;padding:5px 12px;cursor:pointer}
+.bar{margin-top:12px;text-align:right}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));z-index:9}
+.modal[hidden]{display:none}
+.mp{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:14px;width:min(580px,100%);max-height:85vh;overflow:auto}
+.mh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}.x{width:26px;height:26px;padding:0;border:2px solid var(--line);border-radius:7px;background:var(--bg);cursor:pointer;font-size:.75rem;line-height:1;flex:none}.mh h2{flex:1;margin:0}
+button:focus-visible{outline:3px solid var(--volt);outline-offset:2px}
+.nobugs .bo,.nowx .wo,.nobugs.nowx .hu{display:none!important}
+.opt{display:block;margin:10px 0;padding:8px 10px;border:2px solid var(--line);border-radius:10px;background:var(--bg);cursor:pointer}.opt small{display:block;color:var(--mute)}
+</style>
+</head>
+<body>
+<main>
+<h1>🥔⚡ Картопляна енергія</h1>
+<div class="wx wo" id="wx"></div><div class="news" id="news" hidden></div>
+<div class="stats">
+<div class="stat e"><b id="en">0</b><span>⚡ у складах (1⚡ = $1)</span><br><button class="sell" id="sell">Продати все</button></div>
+<div class="stat m"><b id="usd">$0</b><span>доларів · зароблено всього <span id="tot">$0</span></span></div>
+</div>
+<div class="cols">
+<section id="farm">
+<h2>Ферма</h2>
+<div class="tb"><button id="openShop">🛒 Магазин</button><button id="openBag">🎒 Рюкзак</button><button id="delBtn">🗑 Видалення</button><button id="openSet">⚙️ Налаштування</button></div>
+<p class="hint" id="placing" hidden style="color:var(--ink);font-weight:bold"></p>
+<div class="field" id="field"></div>
+<p class="hint" id="selinfo"></p>
+<p class="hint">Клікніть на порожню грядку, щоб посадити обране насіння. Достиглу картоплю клікніть, щоб зібрати: енергія зарахується в момент збору. Цифра в куті — скільки врожаїв лишилось. <span class="hb bo">Якщо на грядку напав жук, клікніть на ростучу картоплю, щоб обприскати обраним оприскуванням з рюкзака. Не всі оприскування діють на всіх жуків. Це й прибирає жука, й дає захист від нових.</span> <span class="wo">Погода впливає на ріст і може знищити нестійкі сорти.</span> <span class="hu">Шкідники й погода з'являються, коли ви заробите $290 за весь час.</span></p>
+<h2 style="margin-top:14px">Генератори</h2>
+<div class="gens" id="gens"></div>
+<h2 style="margin-top:14px">Склади енергії</h2>
+<div class="tanks" id="tanks"></div>
+<p class="hint" id="status"></p>
+</section>
+<section>
+<div id="clients"></div>
+<div class="bar"><button id="reset">Почати спочатку</button></div>
+</section>
+</div>
+</main>
+<div class="modal" id="shop" hidden><div class="mp">
+<div class="mh"><button class="x" data-close="shop" aria-label="Закрити">✕</button><h2>Магазин</h2><button class="tab on" data-tab="ups">Покращення</button><button class="tab" data-tab="sd">Насіння</button><button class="tab" data-tab="gs">Генератори</button><button class="tab bo" data-tab="spd">Оприскування</button></div>
+<div id="ups"></div><div id="sd" hidden></div><div id="gs" hidden></div><div id="spd" class="bo" hidden></div>
+</div></div>
+<div class="modal" id="set" hidden><div class="mp">
+<div class="mh"><button class="x" data-close="set" aria-label="Закрити">✕</button><h2>⚙️ Налаштування</h2></div>
+<h2>Мова</h2><div class="tb"><button class="tab" id="lgUk">Українська</button><button class="tab" id="lgEn">English</button></div>
+<label class="opt"><input type="checkbox" id="optB"> <b>Жуки та оприскування</b><small>Якщо вимкнути, жуків, оприскувань і все, що з ними пов'язане, буде прибрано з гри.</small></label>
+<label class="opt"><input type="checkbox" id="optW"> <b>Погода</b><small>Якщо вимкнути, погоди не буде: ріст завжди звичайний, а все, що з нею пов'язане, зникне.</small></label>
+</div></div>
+<div class="modal" id="bag" hidden><div class="mp">
+<div class="mh"><button class="x" data-close="bag" aria-label="Закрити">✕</button><h2>🎒 Рюкзак</h2></div>
+<p class="hint" style="margin:0 0 8px">Тут зберігаються насіння, генератори та інші куплені речі. Клікніть, щоб обрати насіння або поставити річ. Покращення (наприклад, добриво) діють одразу і в рюкзак не потрапляють.</p>
+<div id="bagbody"></div>
+</div></div>
+<script>
+const KEY="potato-energy-v2";
+const V=[
+{n:"Класична",sym:"",bg:"radial-gradient(circle at 35% 30%,#ecd2a3,#c9a56d)",r:"55% 45% 50% 50%/60% 55% 45% 40%",p:3,harv:2,yld:3,grow:1,en:1,w:30,note:"Простий старт"},
+{n:"Червона",sym:"",bg:"radial-gradient(circle at 35% 30%,#e0645a,#a52f27)",r:"55% 45% 50% 50%/60% 55% 45% 40%",p:12,harv:3,yld:3,grow:.9,en:1.2,w:22,note:"Більше врожаїв"},
+{n:"Золота",sym:"✨",bg:"linear-gradient(135deg,#fff0a0,#e0a800)",r:"50% 50% 45% 55%/55% 50% 50% 45%",g:"#ffd84a",p:40,harv:3,yld:4,grow:.9,en:1.6,usd:3,w:14,note:"+$3 за кожен збір"},
+{n:"Сонячна",sym:"☀️",bg:"radial-gradient(circle at 40% 35%,#fff6a8,#ffb300)",r:"50%",g:"#ffcc33",p:70,harv:3,yld:3,grow:.5,en:1.2,w:12,note:"Росте вдвічі швидше"},
+{n:"Місячна",sym:"🌙",bg:"radial-gradient(circle at 40% 35%,#f4f6ff,#9aa4c8)",r:"50%",g:"#b8c4ff",p:90,harv:3,yld:3,grow:1,en:1.5,free:true,w:12,note:"Не займає генератор"},
+{n:"Фіолетова",sym:"🔮",bg:"radial-gradient(circle at 35% 30%,#a56be0,#5b2a99)",r:"55% 45% 50% 50%/60% 55% 45% 40%",p:120,harv:4,yld:4,grow:.8,en:2.2,w:8,note:"Міцна й дуже енергійна"},
+{n:"Крижана",sym:"❄️",bg:"linear-gradient(135deg,#d9f4ff,#74c4ea)",r:"30% 70% 40% 60%/50% 40% 60% 50%",g:"#9be0ff",p:180,harv:8,yld:3,grow:1.2,en:1.6,w:7,note:"Дуже багато врожаїв"},
+{n:"Вогненна",sym:"🔥",bg:"radial-gradient(circle at 40% 60%,#ffd54a,#e8501a)",r:"50% 50% 50% 50%/70% 70% 30% 30%",g:"#ff7a2a",p:250,harv:1,yld:6,grow:.8,en:5,w:6,note:"Один врожай, але величезна енергія"},
+{n:"Грозова",sym:"⚡",bg:"radial-gradient(circle at 35% 30%,#4b5a8a,#1c2548)",r:"45% 55% 50% 50%/55% 45% 55% 45%",g:"#6aa8ff",p:320,harv:3,yld:4,grow:.9,en:2,crit:.25,w:6,note:"25% шанс подвоїти енергію"},
+{n:"Грибна",sym:"🍄",bg:"radial-gradient(circle at 35% 30%,#e8c9a8,#a8785a)",r:"55% 45% 50% 50%/60% 55% 45% 40%",p:400,harv:4,yld:4,grow:.8,en:2,back:.25,w:6,note:"25% шанс повернути насінину"},
+{n:"Кришталева",sym:"💎",bg:"linear-gradient(135deg,#e8fbff,#7fe1d6 55%,#b69cff)",r:"18%",g:"#8ff0ff",p:700,harv:4,yld:5,grow:.8,en:2.5,direct:true,w:3,note:"Енергія одразу в долари, склад не потрібен"},
+{n:"Космічна",sym:"🌌",bg:"radial-gradient(circle at 40% 35%,#3a2a7a,#0a0a2a)",r:"50%",g:"#8a6aff",p:1500,harv:6,yld:6,grow:.6,en:4,crit:.3,back:.2,usd:10,w:1.5,note:"Всі бонуси разом"},
+{n:"Випадкова",rnd:true,sym:"🎲",bg:"radial-gradient(circle at 35% 30%,#c9b8e8,#7d6aa8)",r:"40% 60% 50% 50%/50% 45% 55% 50%",p:25,harv:0,yld:0,grow:1,en:0,w:0},
+{n:"Рожева",sym:"🌸",bg:"radial-gradient(circle at 35% 30%,#ffd1e6,#e0679f)",r:"55% 45% 50% 50%/60% 55% 45% 40%",p:30,harv:3,yld:3,grow:1,en:1.1,back:.35,w:20,note:"35% шанс повернути насінину"},
+{n:"Вітряна",sym:"🍃",bg:"radial-gradient(circle at 35% 30%,#d8f5d0,#6fbf73)",r:"40% 60% 55% 45%/50% 50% 50% 50%",p:130,harv:3,yld:3,grow:.4,en:1,w:10,note:"Росте в 2,5 раза швидше"},
+{n:"Океанічна",sym:"🌊",bg:"linear-gradient(135deg,#8fd3ff,#1f6fb8)",r:"45% 55% 60% 40%/55% 45% 55% 45%",g:"#5cb8ff",p:200,harv:5,yld:3,grow:1,en:1.4,w:8,note:"5 врожаїв"},
+{n:"Медова",sym:"🍯",bg:"radial-gradient(circle at 35% 30%,#ffe08a,#d98a00)",r:"50% 50% 45% 55%/55% 50% 50% 45%",p:150,harv:3,yld:3,grow:.9,en:1.2,usd:6,w:6,note:"+$6 за кожен збір"},
+{n:"Лавова",sym:"🌋",bg:"radial-gradient(circle at 40% 60%,#ff8a3d,#5a1a0a)",r:"50% 50% 40% 60%/60% 60% 40% 40%",g:"#ff5a1f",p:550,harv:3,yld:5,grow:.9,en:2.4,crit:.35,w:5,note:"35% шанс подвоїти енергію"},
+{n:"Магнітна",sym:"🧲",bg:"linear-gradient(135deg,#d6d9e0,#6b7488)",r:"20% 20% 40% 40%",p:480,harv:2,yld:8,grow:1,en:1.8,w:5,note:"Величезний урожай: 8 картоплин"},
+{n:"Тіньова",sym:"🌑",bg:"radial-gradient(circle at 40% 35%,#4a4a58,#101018)",r:"50%",g:"#7a7aa0",p:900,harv:4,yld:4,grow:.8,en:2.8,free:true,w:3,note:"Не займає генератор, багато енергії"},
+{n:"Веселкова",sym:"🌈",bg:"linear-gradient(135deg,#ff8a8a,#ffe08a,#8affb0,#8ac4ff,#d08aff)",r:"50% 50% 50% 50%/60% 60% 40% 40%",g:"#ffffff",p:1100,harv:4,yld:5,grow:.8,en:2.5,crit:.3,back:.3,usd:4,w:2,note:"Шанси на все"},
+{n:"Драконяча",sym:"🐉",bg:"radial-gradient(circle at 40% 35%,#6fe08a,#0f5a2a)",r:"30% 70% 60% 40%/40% 50% 50% 60%",g:"#3dff7a",p:2800,harv:5,yld:7,grow:.7,en:5,crit:.3,w:1,note:"Легендарна: 5 врожаїв по 7🥔"},
+{n:"Зоряна",sym:"⭐",bg:"radial-gradient(circle at 40% 35%,#fff7b0,#f5a623)",r:"50%",g:"#fff27a",p:5000,harv:6,yld:7,grow:.6,en:4.5,direct:true,usd:20,w:.8,note:"Енергія одразу в долари + $20 за збір"},
+{n:"Каштанова",sym:"🌰",bg:"radial-gradient(circle at 35% 30%,#c58a5a,#6b3f1f)",r:"50% 50% 45% 55%/60% 60% 40% 40%",p:70,harv:4,yld:3,grow:1,en:1.2,w:12,note:"4 врожаї"},
+{n:"Сніжна",sym:"⛄",bg:"radial-gradient(circle at 35% 30%,#ffffff,#bcd8ea)",r:"50%",p:160,harv:5,yld:3,grow:1.1,en:1.3,w:8,note:"5 врожаїв, не боїться зими"},
+{n:"Пустельна",sym:"🏜️",bg:"linear-gradient(135deg,#f3d9a0,#c98b3e)",r:"45% 55% 50% 50%/55% 45% 55% 45%",p:260,harv:3,yld:4,grow:.9,en:1.7,w:7,note:"Стійка до спеки"},
+{n:"Колюча",sym:"🌵",bg:"radial-gradient(circle at 35% 30%,#a8d68a,#3e8a3a)",r:"50% 50% 40% 60%/60% 50% 50% 40%",p:280,harv:4,yld:3,grow:.9,en:1.4,w:7,note:"Жуки не люблять колючки"},
+{n:"Отруйна",sym:"☠️",bg:"radial-gradient(circle at 35% 30%,#b8e060,#4a6a10)",r:"55% 45% 50% 50%/60% 55% 45% 40%",g:"#9cff3d",p:350,harv:3,yld:3,grow:1,en:1.6,w:6,note:"Жуки її не їдять"},
+{n:"Броньована",sym:"🛡️",bg:"linear-gradient(135deg,#c8ced8,#5a6a82)",r:"20% 20% 45% 45%",p:750,harv:3,yld:5,grow:1,en:2,w:4,note:"Захист від бурі та більшості жуків"},
+{n:"Антиматеріальна",sym:"✺",bg:"radial-gradient(circle at 50% 50%,#000 0 34%,#2a0050 50%,#d62bff 70%,#27e0ff 100%)",r:"50%",g:"#d62bff",p:9000,harv:7,yld:8,grow:.6,en:6,crit:.3,w:.6,note:"Найкраща: імунітет і стійкість до всього"}];
+const vdesc=v=>v.rnd?"Невідомий сорт! Після посадки стане випадковим сортом (рідкісні трапляються рідше)":v.harv+" врожаї × "+v.yld+"🥔, ріст ×"+v.grow+", ⚡ ×"+v.en+(vnote(v)?". "+vnote(v):"")+(S.set.bugs&&v.imm&&v.imm.length?". Імунітет: "+(v.imm.length>=BUG.length?"до всіх жуків":v.imm.map(k=>BUG[k].sym).join(" ")):"")+(S.set.wx&&v.res&&v.res.length?". Стійка до: "+v.res.map(h=>HZ[h]).join(", "):"");
+const spud=(v,sm)=>"<span class='sp"+(sm?" sm":"")+"' style='background:"+v.bg+";border-radius:"+v.r+";box-shadow:inset -3px -3px 0 rgba(0,0,0,.2)"+(v.g?",0 0 "+(sm?6:12)+"px "+v.g:"")+"'>"+v.sym+"</span>";
+function pickRandom(){const L=V.filter(v=>!v.rnd);let x=Math.random()*L.reduce((a,v)=>a+v.w,0);for(const v of L){x-=v.w;if(x<=0)return V.indexOf(v)}return 0}
+const ALL=[0,1,2,3,4,5],HZ={storm:"бурі",heat:"спеки",cold:"морозу"};
+const BUG=[
+{n:"Колорадський жук",sym:"🪲",eat:"harv",dur:12,w:30,note:"з'їв один врожай"},
+{n:"Гусінь",sym:"🐛",eat:"prog",dur:9,w:25,note:"з'їла весь ріст, картопля росте знову"},
+{n:"Слимак",sym:"🐌",eat:"harv",n2:2,dur:16,w:14,note:"з'їв аж два врожаї"},
+{n:"Сарана",sym:"🦗",eat:"seed",dur:14,w:10,note:"з'їла всю насінину"},
+{n:"Щур",sym:"🐀",eat:"steal",dur:15,w:8,note:"украв гроші та врожай"},
+{n:"Шершень",sym:"🐝",eat:"seed",dur:10,w:5,ign:true,note:"з'їв насінину (не боїться захисту)"}];
+const SP=[
+{n:"Класичне",sym:"🧴",p:5,dur:30,cov:[0,1]},
+{n:"Біо-спрей",sym:"🌿",p:15,dur:60,cov:[0,1,2]},
+{n:"Феромонна пастка",sym:"🪤",p:35,dur:90,cov:[3,5]},
+{n:"Хімічне",sym:"⚗️",p:40,dur:90,cov:[0,1,2,4]},
+{n:"Сильнодіюче",sym:"☣️",p:110,dur:150,cov:[0,1,2,3,4]},
+{n:"Радіоактивне",sym:"☢️",p:320,dur:240,cov:ALL},
+{n:"Квантовий спрей",sym:"🌌",p:1000,dur:600,cov:ALL}];
+const spdesc=s=>"діє "+s.dur+" с · проти: "+s.cov.map(k=>BUG[k].sym).join(" ");
+const spPrice=t=>Math.ceil(SP[t].p*Math.pow(.92,S.u.spray));
+const WX=[
+{n:"Сонячно",sym:"☀️",gr:.75,w:30,pst:1,col:"#e8b64f",note:"Картопля росте швидше."},
+{n:"Хмарно",sym:"⛅",gr:1.1,w:20,pst:.9,col:"#9aa4b8",note:"Трохи повільніший ріст, жуків трохи менше."},
+{n:"Дощ",sym:"🌧️",gr:1.4,w:15,pst:.6,col:"#5a8fd0",note:"Росте повільніше, жуків менше."},
+{n:"Буря",sym:"⛈️",gr:1.6,w:7,pst:.3,haz:"storm",rate:.012,col:"#4b5a8a",note:"Може здути картоплю!"},
+{n:"Спека",sym:"🥵",gr:1.5,w:8,pst:1.4,haz:"heat",rate:.008,col:"#e8501a",note:"Картопля може розплавитись, жуків більше."},
+{n:"Зима",sym:"❄️",gr:2.5,w:8,pst:.2,haz:"cold",rate:.006,col:"#74c4ea",note:"Дуже повільний ріст, мороз може знищити картоплю."},
+{n:"Туман",sym:"🌫️",gr:1.2,w:8,pst:2.2,col:"#b8b8b8",note:"Жуків значно більше."},
+{n:"Веселка",sym:"🌈",gr:.55,w:4,pst:.5,col:"#d08aff",note:"Чудова погода: картопля росте майже вдвічі швидше!"},
+{n:"Нейтральна погода",sym:"🌤️",gr:1,w:40,pst:1,col:"#a8b0a0",note:"Нічого особливого: усе як зазвичай."}];
+const IMMN={Червона:[0],Сонячна:[1],Місячна:[3],Фіолетова:[0,2],Крижана:[1,2,3],Вогненна:[0,1,2,3],Грозова:[4,5],Грибна:[0,2],Кришталева:[0,1,2,3,4],Космічна:ALL,Вітряна:[1],Океанічна:[2],Медова:[4],Лавова:[0,2,3],Магнітна:[4,5],Тіньова:[1,3,5],Веселкова:[0,1],Драконяча:ALL,Зоряна:ALL,Отруйна:ALL,Колюча:[0,1,2],Сніжна:[1],Броньована:[3,4,5],Каштанова:[0],Антиматеріальна:ALL};
+const RESN={Сонячна:["heat"],Крижана:["cold"],Вогненна:["heat","cold"],Грозова:["storm"],Вітряна:["storm"],Лавова:["heat"],Тіньова:["storm","cold"],Драконяча:["storm","heat"],Колюча:["heat"],Сніжна:["cold"],Броньована:["storm"],Пустельна:["heat"],Каштанова:["cold"],Антиматеріальна:["storm","heat","cold"],Космічна:["storm","cold"],Зоряна:["storm"]};
+V.forEach(v=>{v.imm=IMMN[v.n]||[];v.res=RESN[v.n]||[]});
+const CL=[{name:"Завод лампочок",need:600,rate:1,price:1.5},{name:"Автомобільний завод",need:1500,rate:2,price:2},{name:"Сталеливарний завод",need:4000,rate:4,price:2.5},{name:"Завод електропотягів",need:9000,rate:8,price:3},{name:"Дата-центр «Хмара»",need:20000,rate:16,price:4},{name:"Алюмінієвий комбінат",need:45000,rate:30,price:5},{name:"Космодром",need:100000,rate:60,price:6},{name:"Місто-мільйонник",need:250000,rate:120,price:8},{name:"Міжнародна мережа",need:600000,rate:250,price:10},{name:"Нафтопереробний завод",need:1200000,rate:500,price:12},{name:"Супутникова мережа",need:2500000,rate:1000,price:15},{name:"Колонія на Марсі",need:6000000,rate:2500,price:20}];
+const G=(n,sym,p,slots,spd,mul,note,o={})=>({n,sym,p,slots,spd,mul,usd:0,crit:0,skip:0,note,...o});
+const GT=[
+G("Генератор v1","⚙️",15,1,1,1,"Простий"),
+G("Генератор v2","🔧",60,2,1,1,"2 місця одразу"),
+G("Генератор v3","🛠️",200,3,.9,1.1,"3 місця, трохи швидший"),
+G("Турбіна","🌀",350,1,.35,1,"Дуже швидка перезарядка"),
+G("Біогенератор","🌿",500,2,1,1.5,"+$1 за кожен збір",{usd:1}),
+G("Мега-генератор","🏭",900,4,.9,1.2,"4 картоплини одразу"),
+G("Золота динамо","🪙",1500,1,1,3,"Втричі більше енергії з картоплини"),
+G("Грозовий генератор","⛈️",2500,2,.8,1.5,"30% шанс подвоїти енергію",{crit:.3}),
+G("Атомний генератор","☢️",6000,3,1.1,3.5,"Багато енергії та +$5 за збір",{usd:5}),
+G("Плазмовий генератор","🔥",15000,3,.5,3,"25% шанс не перезаряджатись",{skip:.25}),
+G("Термоядерний генератор","🌞",40000,6,.6,4,"6 місць і багато енергії"),
+G("Квантовий генератор","🌌",120000,8,.4,6,"Усі бонуси: 8 місць, +$20, шанси",{usd:20,crit:.2,skip:.2}),
+G("Вітряк","🌬️",120,1,.6,1.1,"Швидкий і дешевий"),
+G("Батарейний блок","🔋",700,2,1,1.3,"+$2 за збір",{usd:2}),
+G("Гідротурбіна","🌊",1200,3,.7,1.4,"3 місця і швидка"),
+G("Сонячний концентратор","🔆",3500,2,.9,2.2,"15% шанс подвоїти енергію",{crit:.15}),
+G("Геотермальний генератор","🌋",9000,4,.8,2.8,"4 місця, 15% шанс без перезарядки",{skip:.15}),
+G("Мегареактор","⚛️",25000,5,.7,3.5,"5 місць та +$8 за збір",{usd:8}),
+G("Антиматерія","🕳️",80000,4,.35,8,"Колосальна енергія, 25% шанс подвоїти",{crit:.25}),
+G("Зоряний двигун","🛸",250000,10,.3,7,"10 місць, +$40 за збір, всі шанси",{usd:40,crit:.25,skip:.25})];
+const mkGen=k=>({k,t:Array(GT[k].slots).fill(0)});
+const gdesc=g=>"місць: "+g.slots+", перезарядка ×"+g.spd+", ⚡ ×"+g.mul+(g.note?". "+g.note:"");
+const def=()=>({en:0,usd:9,total:0,unl:false,cl:CL.map(()=>0),gens:[mkGen(0)],farmers:[],sel:0,seeds:[],u:{gen:1,eff:0,spd:0,fert:0,plot:1,store:1,cap:0,farmer:0,learn:0,spray:0,sprayer:0,shelter:0},plots:[],left:[],type:[],prog:[],bug:[],shield:[],bagG:[],bag:{plot:0,store:0},sp:[0,0,0,0,0,0,0],selSp:0,set:{lang:"uk",bugs:true,wx:true},wx:{k:8,left:50000}});
+let S=def();
+try{const r=localStorage.getItem(KEY);if(r){const p=JSON.parse(r),d=def();S={...d,...p,u:{...d.u,...p.u}};if(!p.gens)S.gens=Array.from({length:Math.max(1,(p.u&&p.u.gen)||1)},()=>mkGen(0))}}catch(e){}
+S.seeds=V.map((_,i)=>S.seeds[i]||0);S.sp=SP.map((_,i)=>S.sp[i]||0);S.cl=CL.map((_,i)=>S.cl[i]||0);
+const $=id=>document.getElementById(id);
+const fmt=n=>n>=1e6?(n/1e6).toFixed(2)+"M":n>=1e4?(n/1e3).toFixed(1)+"k":Math.floor(n);
+const YB={gen:1,store:1,plot:1};
+const UPS=[
+
+{id:"store",name:"Новий склад",desc:()=>"Ще один резервуар для енергії",base:40,k:1.9,max:6},
+{id:"cap",name:"Місткість складів",desc:s=>"Кожен склад: "+perTank(s)+" → "+perTank({u:{...s.u,cap:s.u.cap+1}})+" ⚡",base:35,k:1.7,max:12},
+{id:"eff",name:"Ефективність генераторів",desc:s=>"⚡ з картоплини: "+effv(s)+" → "+effv({u:{...s.u,eff:s.u.eff+1}}),base:25,k:1.7},
+{id:"spd",name:"Швидкість генераторів",desc:()=>"Генератор швидше готовий до нового збору",base:30,k:1.7,max:12},
+{id:"fert",name:"Добриво",desc:()=>"Картопля росте швидше",base:20,k:1.7,max:10},
+{id:"plot",name:"Нова грядка",desc:()=>"Ще одне місце для картоплі",base:10,k:1.3},
+{id:"farmer",name:"Фермер",desc:()=>"Збирає врожай на 3 грядках. Ви обираєте, де його поставити",base:80,k:1.8},
+{id:"learn",name:"Навчити фермерів садити",desc:()=>"Фермери ще й садять насіння з рюкзака",base:300,k:1,max:1},
+{id:"spray",name:"Кращі пестициди",desc:()=>"Оприскування дешевше на 8% і діє на 10% довше за кожен рівень",base:40,k:1.8,max:8},
+{id:"sprayer",name:"Фермери обприскують",desc:()=>"Фермери самі обприскують грядки з жуками",base:500,k:1,max:1},
+{id:"shelter",name:"Теплиці та укриття",desc:()=>"Менше втрат від бурі, спеки та морозу",base:250,k:2.1,max:5}];
+function effv(s){return 3+s.u.eff*2}
+function perTank(s){return 40+s.u.cap*30}
+function capTotal(s){return s.u.store*perTank(s)}
+const genMs=()=>2000*Math.pow(.85,S.u.spd);
+const growMs=i=>20000*Math.pow(.85,S.u.fert)*V[S.type[i]||0].grow*(S.set.wx?WX[S.wx.k].gr:1);
+const cost=d=>Math.ceil(d.base*Math.pow(d.k,S.u[d.id]+(S.bag[d.id]||0)-(YB[d.id]||0)));
+let hWhy="",del=false,pf=false,clSig="",newsT=0,bagSig="",gsig="";
+function flash(t){const n=$("news");n.textContent=t;n.hidden=false;clearTimeout(newsT);newsT=setTimeout(()=>{n.hidden=true},6000)}
+function plant(i,now,t){if(!(S.seeds[t]>0))return false;S.seeds[t]--;let r=t;if(V[t].rnd){r=pickRandom();flash("🎲 Випало: "+V[r].n+"!")}S.plots[i]=1;S.prog[i]=0;S.bug[i]=null;S.type[i]=r;S.left[i]=V[r].harv;return true}
+function harvest(i,now){
+ const v=V[S.type[i]||0];let G=null,sl=-1;if(!v.free)for(const q of S.gens){const j=q.t.findIndex(x=>x<=0);if(j>=0){G=q;sl=j;break}}const GT0=G?GT[G.k]:{mul:1,usd:0,crit:0,skip:0,spd:1};
+ let gain=v.yld*effv(S)*v.en*GT0.mul;if(((v.crit||0)+GT0.crit)>Math.random())gain*=2;
+ if((!v.free&&!G)||(!v.direct&&S.en+gain>capTotal(S))){hWhy=(!v.free&&!G)?"Усі генератори зайняті. Зачекайте секунду або купіть ще один у магазині.":"Склади енергії повні. Продайте енергію!";return false}
+ if(G)G.t[sl]=Math.random()<GT0.skip?0:genMs()*v.yld*GT0.spd*.4;if(GT0.usd){S.usd+=GT0.usd;S.total+=GT0.usd}if(v.direct){S.usd+=gain;S.total+=gain}else S.en+=gain;if(v.usd){S.usd+=v.usd;S.total+=v.usd}if(v.back&&Math.random()<v.back){S.seeds[S.type[i]||0]++;flash("🌱 Знайшли ще одну насінину: "+v.n)}S.left[i]--;S.plots[i]=S.left[i]>0?1:0;S.prog[i]=0;return true}
+const spDur=t=>SP[t].dur*(1+.1*S.u.spray)*1000;
+
+function pickW(L,key){let x=Math.random()*L.reduce((a,v)=>a+v[key],0);for(let i=0;i<L.length;i++){x-=L[i][key];if(x<=0)return i}return 0}
+function clearPlot(i){S.plots[i]=0;S.left[i]=0;S.prog[i]=0;S.bug[i]=null}
+function spray(i,auto){const b=S.bug[i];let t=-1;
+ if(auto){t=SP.findIndex((s,x)=>S.sp[x]>0&&(!b||s.cov.includes(b.k)))}
+ else{t=S.sp[S.selSp]>0?S.selSp:S.sp.findIndex(x=>x>0);if(t<0){flash("Немає оприскування. Купіть його в магазині (вкладка «Оприскування»).");return false}
+  if(b&&!SP[t].cov.includes(b.k)){flash(SP[t].n+" не діє на «"+BUG[b.k].n+"». Оберіть інше в 🎒.");return false}}
+ if(t<0)return false;
+ S.sp[t]--;S.bug[i]=null;S.shield[i]={u:Date.now()+spDur(t),c:SP[t].cov};
+ if(!auto)flash(SP[t].sym+" Оприскано: "+SP[t].n+", захист на "+Math.round(spDur(t)/1000)+" с.");return true}
+function growPlots(dt){for(let i=0;i<S.u.plot;i++)if(S.plots[i]&&(S.prog[i]||0)<1)S.prog[i]=Math.min(1,(S.prog[i]||0)+dt/growMs(i))}
+function weather(dt){if(!S.set.wx)return;S.wx.left-=dt;if(S.wx.left>0)return;let k;do{k=pickW(WX,"w")}while(k===S.wx.k);S.wx={k,left:(40+Math.random()*50)*1000};flash(WX[k].sym+" Погода змінилась: "+WX[k].n+". "+WX[k].note)}
+function hazards(dt){if(!S.set.wx)return;const w=WX[S.wx.k];if(!w.haz)return;let lost=0;const ch=w.rate*dt/1000*Math.max(.1,1-.18*S.u.shelter);
+ for(let i=0;i<S.u.plot;i++)if(S.plots[i]&&!(V[S.type[i]||0].res||[]).includes(w.haz)&&Math.random()<ch){clearPlot(i);lost++}
+ if(lost)flash(w.sym+" "+w.n+": втрачено картоплин: "+lost)}
+function pests(dt){if(!S.set.bugs)return;const w=S.set.wx?WX[S.wx.k]:{pst:1};
+ for(let i=0;i<S.u.plot;i++){const b=S.bug[i];if(b){b.t+=dt;if(b.t>=BUG[b.k].dur*1000)eat(i)}}
+ if(Math.random()<dt/1000/30*w.pst){const L=[];for(let i=0;i<S.u.plot;i++)if(S.plots[i]&&!S.bug[i])L.push(i);if(!L.length)return;
+  const i=L[Math.floor(Math.random()*L.length)],k=pickW(BUG,"w"),B=BUG[k];
+  const sh=S.shield[i];if((V[S.type[i]||0].imm||[]).includes(k)||(sh&&sh.u>Date.now()&&sh.c.includes(k)))return;
+  S.bug[i]={k,t:0};flash(B.sym+" "+B.n+" напав на грядку! Клікніть на неї, щоб обприскати.")}}
+function eat(i){const B=BUG[S.bug[i].k];S.bug[i]=null;
+ if(B.eat==="seed")clearPlot(i);
+ else if(B.eat==="prog")S.prog[i]=0;
+ else{if(B.eat==="steal")S.usd-=Math.min(S.usd,Math.max(5,S.usd*.08));S.left[i]-=B.n2||1;if(S.left[i]<=0)clearPlot(i)}
+ flash(B.sym+" "+B.n+" "+B.note+".")}
+const fOn=i=>S.farmers.findIndex(f=>f.plots.includes(i));
+function placeFarmer(i){
+ const taken=new Set();S.farmers.forEach(f=>f.plots.forEach(p=>taken.add(p)));
+ if(taken.has(i))return;
+ const c=[];for(let j=0;j<S.u.plot;j++)if(!taken.has(j))c.push(j);
+ c.sort((a,b)=>Math.abs(a-i)-Math.abs(b-i)||a-b);
+ if(!c.length)return;S.farmers.push({plots:c.slice(0,3),t:0});render();save()}
+function clickPlot(i){
+ if(i>=S.u.plot)return;
+ const t=S.plots[i],now=Date.now();
+ if(del){const fi=fOn(i);
+  if(fi>=0){S.farmers.splice(fi,1);flash("Фермера прибрано. Його можна поставити знову.")}
+  else if(t){S.seeds[S.type[i]||0]++;S.plots[i]=0;S.left[i]=0;flash("Картоплю прибрано, насіння повернулось у рюкзак.")}
+  render();save();return}
+ if(pf&&S.u.farmer-S.farmers.length>0){const bf=S.farmers.length;placeFarmer(i);if(S.farmers.length>bf)pf=false;return}
+ if(!t){if(!plant(i,now,S.sel))flash("Немає обраного насіння. Купіть його в магазині або оберіть інше в рюкзаку.")}
+ else if((S.prog[i]||0)>=1){if(!harvest(i,now))flash(hWhy)}else spray(i);
+ render()}
+function farmersWork(dt){S.farmers.forEach(f=>{f.t=(f.t||0)+dt;if(f.t<1200)return;f.t=0;const now=Date.now();
+ for(const i of f.plots){if(S.plots[i]&&(S.prog[i]||0)>=1&&harvest(i,now))return}
+ if(S.u.sprayer)for(const i of f.plots){if(S.bug[i]&&spray(i,true))return}
+ if(S.u.learn)for(const i of f.plots){if(!S.plots[i]){const lt=S.type[i];const tt=(lt!=null&&S.seeds[lt]>0)?lt:(S.seeds[S.sel]>0?S.sel:S.seeds.findIndex(x=>x>0));if(tt>=0&&plant(i,now,tt))return}}})}
+function contracts(dt){CL.forEach((c,i)=>{if(S.cl[i]===2&&S.en>0){const a=Math.min(S.en,c.rate*dt/1000);S.en-=a;const m=a*c.price;S.usd+=m;S.total+=m}})}
+function sellTank(j){const per=perTank(S);const c=Math.max(0,Math.min(per,S.en-j*per));S.en-=c;S.usd+=c;S.total+=c;render();save()}
+function sign(id){S.cl[id]=2;render();save()}
+function bagItems(bb){
+ const H=t=>{const h=document.createElement("h2");h.textContent=t;h.style.marginTop="14px";bb.appendChild(h)};
+ const row=(sym,name,desc,n,fn)=>{const b=document.createElement("button");b.className="up";b.innerHTML="<span>"+sym+" <b>"+name+"</b><small>"+desc+"</small></span><span class='cost'>×"+n+" · Поставити</span>";b.onclick=fn;bb.appendChild(b)};
+ const hint=t=>{const p=document.createElement("p");p.className="hint";p.textContent=t;bb.appendChild(p)};
+ if(S.set.bugs){H("Оприскування");let m=0;
+ SP.forEach((s,t)=>{const c=S.sp[t];if(!(c>0))return;m++;const b=document.createElement("button");b.className="up"+(S.selSp===t?" sel":"");b.innerHTML="<span>"+s.sym+" <b>"+s.n+"</b><small>"+spdesc(s)+"</small></span><span class='cost'>×"+c+"</span>";b.onclick=()=>{S.selSp=t;render();save()};bb.appendChild(b)});
+ if(!m)hint("Оприскування немає. Купіть у магазині (вкладка «Оприскування»).")}
+ H("Генератори");let n=0;
+ GT.forEach((g,k)=>{const c=S.bagG[k]||0;if(!c)return;n++;row(g.sym,g.n,gdesc(g),c,()=>{if(S.gens.length<40){S.bagG[k]--;S.gens.push(mkGen(k));render();save()}})});
+ if(!n)hint("Генераторів немає. Купіть їх у магазині.");
+ H("Споруди й працівники");n=0;
+ const hand=S.u.farmer-S.farmers.length;
+ if(S.bag.plot){n++;row("🟫","Грядка","Нове місце для картоплі",S.bag.plot,()=>{S.bag.plot--;S.u.plot++;render();save()})}
+ if(S.bag.store){n++;row("🔋","Склад енергії","Ще один резервуар",S.bag.store,()=>{S.bag.store--;S.u.store++;render();save()})}
+ if(hand>0){n++;row("👨‍🌾","Фермер","Клікніть, потім оберіть грядку",hand,()=>{pf=true;$("bag").hidden=true;flash("Клікніть на грядку, щоб поставити фермера.");render()})}
+ if(!n)hint("Порожньо. Грядки, склади й фермерів можна купити в магазині.")}
+function buildStatic(){
+ const u=$("ups");UPS.forEach(d=>{const b=document.createElement("button");b.className="up"+(UPH[d.id]==="b"?" bo":UPH[d.id]==="w"?" wo":"");b.dataset.id=d.id;
+  b.onclick=()=>{const c=cost(d),lv=S.u[d.id]+(S.bag[d.id]||0),cap=d.max?(d.max+(YB[d.id]||0)):0;if(S.usd>=c&&!(cap&&lv>=cap)){S.usd-=c;if(d.id==="plot"||d.id==="store"){S.bag[d.id]=(S.bag[d.id]||0)+1;flash("Куплено в рюкзак. Відкрийте 🎒, щоб поставити.")}else{S.u[d.id]++;if(d.id==="farmer")flash("Фермер у рюкзаку. Відкрийте 🎒, щоб поставити.")}render();save()}};u.appendChild(b)});
+ const sd=$("sd");V.map((v,t)=>t).sort((a,b)=>V[a].p-V[b].p).forEach(t=>{const v=V[t],r=document.createElement("div");r.className="up seed";
+  r.innerHTML="<span>"+spud(v,1)+" <b>"+v.n+"</b><small><span class='vd' data-t='"+t+"'></span> · $"+v.p+" за насінину · у рюкзаку: <span id='own"+t+"'>0</span></small></span><span class='buys'>"+[1,5,10].map(n=>"<button data-t='"+t+"' data-n='"+n+"'>×"+n+"</button>").join("")+"</span>";sd.appendChild(r)});
+ sd.querySelectorAll("button").forEach(b=>b.onclick=()=>{const t=+b.dataset.t,n=+b.dataset.n,c=V[t].p*n;if(S.usd>=c){S.usd-=c;S.seeds[t]+=n;render();save()}});
+ const gsx=$("gs");GT.map((g,k)=>k).sort((a,b)=>GT[a].p-GT[b].p).forEach(k=>{const g=GT[k],r=document.createElement("div");r.className="up seed";r.innerHTML="<span>"+g.sym+" <b>"+g.n+"</b><small>"+gdesc(g)+" · $"+fmt(g.p)+" · у вас: <span id='gown"+k+"'>0</span></small></span><span class='buys'><button data-k='"+k+"'>Купити</button></span>";gsx.appendChild(r)});
+ gsx.querySelectorAll("button").forEach(b=>b.onclick=()=>{const k=+b.dataset.k,g=GT[k];if(S.usd>=g.p&&S.gens.length<40){S.usd-=g.p;S.bagG[k]=(S.bagG[k]||0)+1;flash("Генератор у рюкзаку. Відкрийте 🎒, щоб поставити.");render();save()}});
+ const spx=$("spd");SP.forEach((s,t)=>{const r=document.createElement("div");r.className="up seed";r.innerHTML="<span>"+s.sym+" <b>"+s.n+"</b><small>"+spdesc(s)+" · <span id='spp"+t+"'></span> за одиницю · у рюкзаку: <span id='spo"+t+"'>0</span></small></span><span class='buys'>"+[1,5,10].map(n=>"<button data-t='"+t+"' data-n='"+n+"'>×"+n+"</button>").join("")+"</span>";spx.appendChild(r)});
+ spx.querySelectorAll("button").forEach(b=>b.onclick=()=>{const t=+b.dataset.t,n=+b.dataset.n,c=spPrice(t)*n;if(S.usd>=c){S.usd-=c;S.sp[t]+=n;render();save()}});
+ document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{$(b.dataset.close).hidden=true});
+ document.querySelectorAll(".modal").forEach(m=>m.addEventListener("click",e=>{if(e.target===m)m.hidden=true}));
+ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("on",x===b));$("ups").hidden=true;["ups","sd","gs","spd"].forEach(id=>{$(id).hidden=id!==b.dataset.tab})});
+ $("openShop").onclick=()=>{$("shop").hidden=false};
+ $("openBag").onclick=()=>{bagSig="";$("bag").hidden=false;render()};
+ $("delBtn").onclick=()=>{del=!del;$("delBtn").classList.toggle("on",del);$("farm").classList.toggle("del",del);flash(del?"Режим видалення: клікніть на фермера, картоплю або генератор (генератор повертається в рюкзак).":"Режим видалення вимкнено.")};
+ $("sell").onclick=()=>{S.usd+=S.en;S.total+=S.en;S.en=0;render();save()};
+ $("reset").onclick=()=>{if(confirm(L("Почати гру спочатку?"))){const st=S.set;S=def();S.set=st;gsig="";clSig="";bagSig="";$("gens").innerHTML="";$("news").hidden=true;del=false;pf=false;$("delBtn").classList.remove("on");$("farm").classList.remove("del");save();render()}}}
+function renderClients(){
+ CL.forEach((c,i)=>{if(S.cl[i]===0&&S.total>=c.need){S.cl[i]=1;flash("💼 Нова компанія: "+c.name+". Вона хоче купувати вашу електроенергію!")}});
+ const sig=S.cl.join(",");if(sig===clSig)return;clSig=sig;
+ let h="<h2>Клієнти</h2>",ls=false;
+ CL.forEach((c,i)=>{const st=S.cl[i];
+  if(st===0){if(ls)return;ls=true;h+="<div class='cl lock'><b>???</b><small>Прийде, коли ви заробите $"+c.need+"</small></div>";return}
+  h+="<div class='cl"+(st===1?" offer":"")+"'><b>"+c.name+"</b><small>Купує до "+c.rate+"⚡/с по $"+c.price+" за ⚡</small>"+(st===1?"<button data-i='"+i+"'>Підписати контракт</button>":"<small>✔ Контракт діє, енергія продається автоматично</small>")+"</div>"});
+ const box=$("clients");box.innerHTML=h;box.querySelectorAll("button").forEach(b=>{b.onclick=()=>sign(+b.dataset.i)})}
+function render(){render0();applyLang()}
+function render0(){
+ const fl=$("field");
+ if(fl.children.length!==S.u.plot){fl.innerHTML="";for(let i=0;i<S.u.plot;i++){const b=document.createElement("button");b.className="plot";b.onclick=()=>clickPlot(i);fl.appendChild(b)}}
+ const now=Date.now();
+ [...fl.children].forEach((b,i)=>{const t=S.plots[i],v=V[S.type[i]||0],fi=fOn(i);let cls="plot",h="";
+  if(t){const p=S.prog[i]||0;if(p>=1){cls+=" ready";h=spud(v)}else h="🌱<i style='width:"+(p*100)+"%'></i>";h+="<small>"+S.left[i]+"</small>";if(S.bug[i])h+="<b class='bug'>"+BUG[S.bug[i].k].sym+"</b>";if(S.shield[i]&&S.shield[i].u>Date.now())h+="<u class='sh'>🛡️</u>"}
+  if(fi>=0)h+="<em>👨‍🌾</em>";
+  b.className=cls;if(b._h!==h){b._h=h;b.innerHTML=h}b.style.outline=fi>=0?"3px solid hsl("+(fi*67%360)+",65%,55%)":"";b.style.outlineOffset="-3px"});
+ const hand=S.u.farmer-S.farmers.length,p=$("placing");p.hidden=!(pf&&hand>0);p.textContent="👨‍🌾 Фермер чекає: клікніть на грядку, щоб поставити його. Він збиратиме врожай на трьох грядках поруч.";
+ if(!(S.seeds[S.sel]>0)){const k=S.seeds.findIndex(x=>x>0);if(k>=0)S.sel=k}
+ if(!(S.sp[S.selSp]>0)){const q=S.sp.findIndex(x=>x>0);if(q>=0)S.selSp=q}
+ $("selinfo").textContent="Обране насіння: "+V[S.sel].n+" (у рюкзаку: "+S.seeds[S.sel]+")"+(S.set.bugs?". Оприскування: "+(S.sp[S.selSp]>0?SP[S.selSp].sym+" "+SP[S.selSp].n+" ×"+S.sp[S.selSp]:"немає")+".":"");
+ const w=WX[S.wx.k],wx=$("wx");wx.innerHTML=w.sym+" <b>"+w.n+"</b> · ріст ×"+w.gr+(w.haz?" · ⚠️ загроза: "+HZ[w.haz]:"")+" · ще "+Math.ceil(S.wx.left/1000)+" с<br><small>"+w.note+"</small>";wx.style.borderColor=w.col;wx.hidden=!S.unl;
+ $("en").textContent=fmt(S.en)+" / "+capTotal(S);$("usd").textContent="$"+fmt(S.usd);$("tot").textContent="$"+fmt(S.total);
+ const gs=$("gens");
+ const gk=S.gens.map(q=>q.k).join();if(gk!==gsig){gsig=gk;gs.innerHTML="";S.gens.forEach(q=>{const d=document.createElement("button");d.className="gen";d.title=GT[q.k].n;d.innerHTML=GT[q.k].sym+"<small></small>";d.onclick=()=>{if(del&&S.gens.length>1){S.bagG[q.k]=(S.bagG[q.k]||0)+1;S.gens.splice(S.gens.indexOf(q),1);flash("Генератор повернувся в рюкзак.");render();save()}};gs.appendChild(d)})}
+ [...gs.children].forEach((d,i)=>{const q=S.gens[i];if(!q)return;d.classList.toggle("on",q.t.some(x=>x>0));d.lastChild.textContent=q.t.filter(x=>x<=0).length+"/"+q.t.length});
+ const t=$("tanks"),n=S.u.store,per=perTank(S);
+ if(t.children.length!==n){t.innerHTML="";for(let j=0;j<n;j++){const b=document.createElement("button");b.className="tank";b.onclick=()=>sellTank(j);b.setAttribute("aria-label","Продати енергію зі складу");b.innerHTML="<i></i><span></span>";t.appendChild(b)}}
+ [...t.children].forEach((b,j)=>{const c=Math.max(0,Math.min(per,S.en-j*per));b.firstChild.style.height=(c/per*100)+"%";b.lastChild.textContent=Math.floor(c)+"/"+per;b.classList.toggle("full",c>=per)});
+ $("status").textContent=S.en+3*effv(S)>capTotal(S)?"Склади повні — збір урожаю може зупинитись. Продайте енергію!":"Клікніть на склад, щоб продати його енергію за долари.";
+ renderClients();
+ if(!$("shop").hidden){
+  UPS.forEach(d=>{const b=document.querySelector('.up[data-id="'+d.id+'"]'),lv=S.u[d.id]+(S.bag[d.id]||0),c=cost(d),mx=d.max?lv>=d.max+(YB[d.id]||0):false;
+   b.disabled=mx||S.usd<c;b.innerHTML="<span>"+d.name+"<small>"+d.desc(S)+"</small></span><span class='cost'>"+(mx?"макс.":"$"+fmt(c))+"</span>"});
+  document.querySelectorAll("#sd .buys button").forEach(b=>{b.disabled=S.usd<V[+b.dataset.t].p*+b.dataset.n});document.querySelectorAll("#spd .buys button").forEach(b=>{b.disabled=S.usd<spPrice(+b.dataset.t)*+b.dataset.n});SP.forEach((s,t)=>{$("spp"+t).textContent="$"+spPrice(t);$("spo"+t).textContent=S.sp[t]});
+  document.querySelectorAll("#sd .vd").forEach(x=>{const d=vdesc(V[+x.dataset.t]);if(x.dataset.k!==d){x.dataset.k=d;x.textContent=d}});V.forEach((v,i)=>{$("own"+i).textContent=S.seeds[i]});GT.forEach((g,k)=>{$("gown"+k).textContent=S.gens.filter(q=>q.k===k).length+(S.bagG[k]||0)});document.querySelectorAll("#gs button").forEach(b=>{b.disabled=S.usd<GT[+b.dataset.k].p||S.gens.length>=40})}
+ if(!$("bag").hidden){const sig=S.seeds.join()+S.sel+"|"+S.bagG.join()+"|"+(S.bag.plot||0)+","+(S.bag.store||0)+","+(S.u.farmer-S.farmers.length)+pf+S.gens.length+S.sp.join()+S.selSp+S.set.bugs+S.set.wx;if(sig!==bagSig){bagSig=sig;const bb=$("bagbody");bb.innerHTML="";
+  bb.innerHTML="<h2>Насіння</h2>";if(!S.seeds.some(x=>x>0))bb.innerHTML+="<p class='hint'>Насіння немає. Купіть його в магазині.</p>";
+  V.forEach((v,i)=>{if(!(S.seeds[i]>0))return;const b=document.createElement("button");b.className="up"+(S.sel===i?" sel":"");
+   b.innerHTML="<span>"+spud(v,1)+" <b>"+v.n+"</b><small>"+vdesc(v)+"</small></span><span class='cost'>×"+S.seeds[i]+"</span>";
+   b.onclick=()=>{S.sel=i;render();save()};bb.appendChild(b)});bagItems(bb)}}}
+
+const UPH={spray:"b",sprayer:"b",shelter:"w"};
+const ALTN={Отруйна:"Токсична, але прибуткова",Колюча:"4 врожаї",Броньована:"Багато енергії",Сніжна:"5 врожаїв",Пустельна:"Багато енергії",Антиматеріальна:"Найкраща картопля"};
+const TAGS={Отруйна:"b",Колюча:"b",Броньована:"bw",Сніжна:"w",Пустельна:"w",Антиматеріальна:"bw"};
+function vnote(v){const g=TAGS[v.n];return g&&((!S.set.bugs&&g.includes("b"))||(!S.set.wx&&g.includes("w")))?ALTN[v.n]:v.note}
+const EN={
+"Картопляна енергія":"Potato Energy","⚡ у складах (1⚡ = $1)":"⚡ in storage (1⚡ = $1)","Продати все":"Sell all","доларів · зароблено всього":"dollars · total earned",
+"Ферма":"Farm","🛒 Магазин":"🛒 Shop","🎒 Рюкзак":"🎒 Backpack","🗑 Видалення":"🗑 Delete mode","⚙️ Налаштування":"⚙️ Settings","Мова":"Language",
+"Жуки та оприскування":"Bugs and sprays","Погода":"Weather",
+"Якщо вимкнути, жуків, оприскувань і все, що з ними пов'язане, буде прибрано з гри.":"If disabled, bugs, sprays and everything related to them are removed from the game.",
+"Якщо вимкнути, погоди не буде: ріст завжди звичайний, а все, що з нею пов'язане, зникне.":"If disabled, there is no weather: growth is always normal and everything related to it disappears.",
+"Клікніть на порожню грядку, щоб посадити обране насіння. Достиглу картоплю клікніть, щоб зібрати: енергія зарахується в момент збору. Цифра в куті — скільки врожаїв лишилось.":"Click an empty plot to plant the selected seed. Click ripe potatoes to harvest: energy is credited at the moment of harvest. The number in the corner is how many harvests are left.",
+"Якщо на грядку напав жук, клікніть на ростучу картоплю, щоб обприскати обраним оприскуванням з рюкзака. Не всі оприскування діють на всіх жуків. Це й прибирає жука, й дає захист від нових.":"If a bug attacked a plot, click the growing potato to spray it with the selected spray from your backpack. Not every spray works on every bug. It removes the bug and protects against new ones.",
+"Погода впливає на ріст і може знищити нестійкі сорти.":"Weather affects growth and can destroy non-resistant varieties.",
+"Генератори":"Generators","Склади енергії":"Energy storage","Почати спочатку":"Start over","Магазин":"Shop","Покращення":"Upgrades","Насіння":"Seeds","Оприскування":"Sprays",
+"Тут зберігаються насіння, генератори та інші куплені речі. Клікніть, щоб обрати насіння або поставити річ. Покращення (наприклад, добриво) діють одразу і в рюкзак не потрапляють.":"Seeds, generators and other purchased items are stored here. Click to select a seed or place an item. Upgrades (e.g. fertilizer) take effect immediately and do not go into the backpack.",
+"Класична":"Classic","Простий старт":"Simple start","Червона":"Red","Більше врожаїв":"More harvests","Золота":"Golden","за кожен збір":"per harvest","за збір":"per harvest",
+"Сонячна":"Sun","Росте вдвічі швидше":"Grows twice as fast","Місячна":"Moon","Не займає генератор, багато енергії":"Doesn't occupy a generator, lots of energy","Не займає генератор":"Doesn't occupy a generator",
+"Фіолетова":"Purple","Міцна й дуже енергійна":"Sturdy and very energetic","Крижана":"Icy","Дуже багато врожаїв":"Very many harvests","Вогненна":"Fire",
+"Один врожай, але величезна енергія":"One harvest, but huge energy","Грозова":"Storm","25% шанс подвоїти енергію":"25% chance to double energy","Грибна":"Mushroom","25% шанс повернути насінину":"25% chance to get the seed back",
+"Кришталева":"Crystal","Енергія одразу в долари, склад не потрібен":"Energy goes straight to dollars, no storage needed","Космічна":"Cosmic","Всі бонуси разом":"All bonuses together","Випадкова":"Random",
+"Рожева":"Pink","35% шанс повернути насінину":"35% chance to get the seed back","Вітряна":"Windy","Росте в 2,5 раза швидше":"Grows 2.5× faster","Океанічна":"Ocean","5 врожаїв, не боїться зими":"5 harvests, not afraid of winter","5 врожаїв":"5 harvests",
+"Медова":"Honey","Лавова":"Lava","35% шанс подвоїти енергію":"35% chance to double energy","Магнітна":"Magnetic","Величезний урожай: 8 картоплин":"Huge harvest: 8 potatoes","Тіньова":"Shadow",
+"Веселкова":"Rainbow","Шанси на все":"Chances for everything","Драконяча":"Dragon","Легендарна: 5 врожаїв по 7🥔":"Legendary: 5 harvests of 7🥔","Зоряна":"Star","Енергія одразу в долари + $20 за збір":"Energy goes straight to dollars + $20 per harvest",
+"Каштанова":"Chestnut","4 врожаї":"4 harvests","Сніжна":"Snow","Пустельна":"Desert","Стійка до спеки":"Resistant to heat","Колюча":"Spiky","Жуки не люблять колючки":"Bugs hate thorns",
+"Отруйна":"Poisonous","Жуки її не їдять":"Bugs don't eat it","Броньована":"Armored","Захист від бурі та більшості жуків":"Protection from storms and most bugs","Антиматеріальна":"Antimatter",
+"Найкраща: імунітет і стійкість до всього":"The best: immunity and resistance to everything","Токсична, але прибуткова":"Toxic but profitable","Багато енергії та":"Lots of energy and","Багато енергії":"Lots of energy","Найкраща картопля":"The best potato",
+"Невідомий сорт! Після посадки стане випадковим сортом (рідкісні трапляються рідше)":"Unknown variety! After planting it becomes a random variety (rare ones appear less often)",
+"врожаї ×":"harvests ×","врожаїв":"harvests","врожаї":"harvests","врожай":"harvest","ріст ×":"growth ×",". Імунітет:":". Immunity:","до всіх жуків":"to all bugs",". Стійка до:":". Resistant to:","бурі":"storms","спеки":"heat","морозу":"frost",
+"Колорадський жук":"Colorado beetle","з'їв один врожай":"ate one harvest","Гусінь":"Caterpillar","з'їла весь ріст, картопля росте знову":"ate all the growth, the potato regrows","Слимак":"Slug","з'їв аж два врожаї":"ate as many as two harvests",
+"Сарана":"Locust","з'їла всю насінину":"ate the whole seed","Щур":"Rat","украв гроші та врожай":"stole money and a harvest","Шершень":"Hornet","з'їв насінину (не боїться захисту)":"ate the seed",
+"Класичне":"Classic","Біо-спрей":"Bio spray","Феромонна пастка":"Pheromone trap","Хімічне":"Chemical","Сильнодіюче":"Strong","Радіоактивне":"Radioactive","Квантовий спрей":"Quantum spray",
+"діє":"lasts","с · проти:":"s · targets:",
+"Сонячно":"Sunny","Картопля росте швидше.":"Potatoes grow faster.","Хмарно":"Cloudy","Трохи повільніший ріст, жуків трохи менше.":"Slightly slower growth, slightly fewer bugs.","Дощ":"Rain","Росте повільніше, жуків менше.":"Grows slower, fewer bugs.",
+"Буря":"Storm","Може здути картоплю!":"May blow the potatoes away!","Спека":"Heatwave","Картопля може розплавитись, жуків більше.":"Potatoes may melt, more bugs.","Зима":"Winter","Дуже повільний ріст, мороз може знищити картоплю.":"Very slow growth, frost may destroy the potatoes.",
+"Туман":"Fog","Жуків значно більше.":"Many more bugs.","Веселка":"Rainbow","Чудова погода: картопля росте майже вдвічі швидше!":"Wonderful weather: potatoes grow almost twice as fast!","Нейтральна погода":"Neutral weather","Нічого особливого: усе як зазвичай.":"Nothing special: everything as usual.",
+"Завод лампочок":"Light bulb factory","Автомобільний завод":"Car factory","Сталеливарний завод":"Steel mill","Завод електропотягів":"Electric train factory","Дата-центр «Хмара»":"Data center “Cloud”","Алюмінієвий комбінат":"Aluminum plant",
+"Космодром":"Spaceport","Місто-мільйонник":"Million-person city","Міжнародна мережа":"International network","Нафтопереробний завод":"Oil refinery","Супутникова мережа":"Satellite network","Колонія на Марсі":"Mars colony",
+"Генератор v1":"Generator v1","Простий":"Simple","Генератор v2":"Generator v2","2 місця одразу":"2 slots at once","Генератор v3":"Generator v3","3 місця, трохи швидший":"3 slots, slightly faster","Турбіна":"Turbine","Дуже швидка перезарядка":"Very fast recharge",
+"Біогенератор":"Biogenerator","Мега-генератор":"Mega generator","4 картоплини одразу":"4 potatoes at once","Золота динамо":"Golden dynamo","Втричі більше енергії з картоплини":"3× more energy per potato","Грозовий генератор":"Storm generator","30% шанс подвоїти енергію":"30% chance to double energy",
+"Атомний генератор":"Atomic generator","Плазмовий генератор":"Plasma generator","25% шанс не перезаряджатись":"25% chance to skip recharge","Термоядерний генератор":"Fusion generator","6 місць і багато енергії":"6 slots and lots of energy",
+"Квантовий генератор":"Quantum generator","Усі бонуси: 8 місць,":"All bonuses: 8 slots,","шанси":"chances","Вітряк":"Windmill","Швидкий і дешевий":"Fast and cheap","Батарейний блок":"Battery pack","Гідротурбіна":"Hydro turbine","3 місця і швидка":"3 slots and fast",
+"Сонячний концентратор":"Solar concentrator","15% шанс подвоїти енергію":"15% chance to double energy","Геотермальний генератор":"Geothermal generator","4 місця, 15% шанс без перезарядки":"4 slots, 15% chance of no recharge","Мегареактор":"Megareactor","5 місць та":"5 slots and",
+"Антиматерія":"Antimatter","Колосальна енергія, 25% шанс подвоїти":"Colossal energy, 25% chance to double","Зоряний двигун":"Star drive","10 місць,":"10 slots,","за збір, всі шанси":"per harvest, all chances","місць:":"slots:",", перезарядка ×":", recharge ×",
+"Новий склад":"New storage","Ще один резервуар для енергії":"Another energy tank","Місткість складів":"Storage capacity","Кожен склад:":"Each storage:","Ефективність генераторів":"Generator efficiency","⚡ з картоплини:":"⚡ per potato:",
+"Швидкість генераторів":"Generator speed","Генератор швидше готовий до нового збору":"The generator is ready for the next harvest sooner","Добриво":"Fertilizer","Картопля росте швидше":"Potatoes grow faster","Нова грядка":"New plot","Ще одне місце для картоплі":"Another place for potatoes",
+"Фермер":"Farmer","Збирає врожай на 3 грядках. Ви обираєте, де його поставити":"Harvests 3 plots. You choose where to place him","Навчити фермерів садити":"Teach farmers to plant","Фермери ще й садять насіння з рюкзака":"Farmers also plant seeds from the backpack",
+"Кращі пестициди":"Better pesticides","Оприскування дешевше на 8% і діє на 10% довше за кожен рівень":"Sprays are 8% cheaper and last 10% longer per level","Фермери обприскують":"Farmers spray","Фермери самі обприскують грядки з жуками":"Farmers spray bugged plots themselves",
+"Теплиці та укриття":"Greenhouses and shelters","Менше втрат від бурі, спеки та морозу":"Fewer losses from storms, heat and frost",
+"🎲 Випало:":"🎲 Got:","🌱 Знайшли ще одну насінину:":"🌱 Found another seed:","Немає оприскування. Купіть його в магазині (вкладка «Оприскування»).":"No spray. Buy it in the shop (“Sprays” tab).",
+"не діє на «":"doesn't work on «","». Оберіть інше в 🎒.":"». Choose another in 🎒.","Оприскано:":"Sprayed:",", захист на":", protection for","Погода змінилась:":"Weather changed:",": втрачено картоплин:":": potatoes lost:",
+"напав на грядку! Клікніть на неї, щоб обприскати.":"attacked a plot! Click it to spray.","Фермера прибрано. Його можна поставити знову.":"Farmer removed. You can place him again.","Картоплю прибрано, насіння повернулось у рюкзак.":"Potato removed, the seed returned to your backpack.",
+"Немає обраного насіння. Купіть його в магазині або оберіть інше в рюкзаку.":"No selected seed. Buy it in the shop or pick another in your backpack.","· Поставити":"· Place","Оприскування немає. Купіть у магазині (вкладка «Оприскування»).":"No sprays. Buy them in the shop (“Sprays” tab).",
+"Генераторів немає. Купіть їх у магазині.":"No generators. Buy them in the shop.","Споруди й працівники":"Structures and workers","Грядка":"Plot","Нове місце для картоплі":"A new place for potatoes","Склад енергії":"Energy storage","Ще один резервуар":"Another tank",
+"Клікніть, потім оберіть грядку":"Click, then choose a plot","Клікніть на грядку, щоб поставити фермера.":"Click a plot to place the farmer.","Порожньо. Грядки, склади й фермерів можна купити в магазині.":"Empty. Plots, storages and farmers can be bought in the shop.",
+"Куплено в рюкзак. Відкрийте 🎒, щоб поставити.":"Bought into the backpack. Open 🎒 to place it.","Фермер у рюкзаку. Відкрийте 🎒, щоб поставити.":"Farmer is in the backpack. Open 🎒 to place him.","за насінину · у рюкзаку:":"per seed · in backpack:","· у вас:":"· you have:","Купити":"Buy",
+"Генератор у рюкзаку. Відкрийте 🎒, щоб поставити.":"Generator is in the backpack. Open 🎒 to place it.","за одиницю · у рюкзаку:":"per unit · in backpack:",
+"Режим видалення: клікніть на фермера, картоплю або генератор (генератор повертається в рюкзак).":"Delete mode: click a farmer, a potato or a generator (the generator returns to the backpack).","Режим видалення вимкнено.":"Delete mode off.","Почати гру спочатку?":"Start the game over?",
+"💼 Нова компанія:":"💼 New company:",". Вона хоче купувати вашу електроенергію!":". It wants to buy your electricity!","Клієнти":"Clients","Прийде, коли ви заробите $":"Arrives when you earn $","Купує до":"Buys up to","⚡/с по $":"⚡/s at $","за ⚡":"per ⚡",
+"Підписати контракт":"Sign contract","✔ Контракт діє, енергія продається автоматично":"✔ Contract active, energy is sold automatically","👨‍🌾 Фермер чекає: клікніть на грядку, щоб поставити його. Він збиратиме врожай на трьох грядках поруч.":"👨‍🌾 A farmer is waiting: click a plot to place him. He will harvest three plots nearby.",
+"Обране насіння:":"Selected seed:","(у рюкзаку:":"(in backpack:",". Оприскування:":". Spray:","немає":"none","· ріст ×":"· growth ×","· ⚠️ загроза:":"· ⚠️ threat:","· ще":"· left","Генератор повернувся в рюкзак.":"The generator returned to the backpack.",
+"Склади повні — збір урожаю може зупинитись. Продайте енергію!":"Storage is full — harvesting may stop. Sell some energy!","Клікніть на склад, щоб продати його енергію за долари.":"Click a storage to sell its energy for dollars.","макс.":"max.","Шкідники й погода з'являються, коли ви заробите $290 за весь час.":"Pests and weather appear once you have earned $290 in total.","🐛 Прийшли шкідники, а погода почала змінюватися! Купіть оприскування в магазині.":"🐛 Pests have arrived and the weather is starting to change! Buy sprays in the shop.","🐛 Прийшли шкідники! Купіть оприскування в магазині.":"🐛 Pests have arrived! Buy sprays in the shop.","🌦️ Погода почала змінюватися!":"🌦️ The weather is starting to change!","Насіння немає. Купіть його в магазині.":"No seeds. Buy them in the shop."};
+const LET=/[А-Яа-яІіЇїЄєҐґ]/;
+const KR=Object.keys(EN).sort((a,b)=>b.length-a.length).map(k=>[new RegExp((LET.test(k[0])?"(^|[^А-Яа-яІіЇїЄєҐґ])":"()")+k.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+(LET.test(k[k.length-1])?"(?![А-Яа-яІіЇїЄєҐґ'’])":""),"g"),EN[k]]);
+const trc=new Map(),CYR=/[А-Яа-яІіЇїЄєҐґ]/;
+function tr(s){let r=trc.get(s);if(r!==undefined)return r;r=s;
+ if(CYR.test(s)){for(const [re,e] of KR)r=r.replace(re,(m,pre)=>pre+e);r=r.replace(/(\d)\s?с(?![А-Яа-яІіЇїЄєҐґ'’])/g,"$1 s")}
+ if(trc.size>4000)trc.clear();trc.set(s,r);return r}
+const L=s=>S.set.lang==="en"?tr(s):s;
+const O=new WeakMap(),Tm=new WeakMap();
+function applyLang(){if(typeof document.createTreeWalker!=="function")return;const en=S.set.lang==="en",w=document.createTreeWalker(document.body,4);let n;
+ while(n=w.nextNode()){if(n.parentNode&&n.parentNode.nodeName==="SCRIPT")continue;const cur=n.data;let o=O.get(n);if(o===undefined||cur!==Tm.get(n)){o=cur;O.set(n,o)}const want=en?tr(o):o;if(cur!==want)n.data=want;Tm.set(n,want)}}
+function applySet(){const b=document.body.classList;b.toggle("nobugs",!S.set.bugs);b.toggle("nowx",!S.set.wx);document.documentElement.lang=S.set.lang;document.title=S.set.lang==="en"?"Potato Energy":"Картопляна енергія"}
+function showTab(id){document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("on",x.dataset.tab===id));["ups","sd","gs","spd"].forEach(x=>{$(x).hidden=x!==id})}
+function renderSet(){$("lgUk").classList.toggle("on",S.set.lang==="uk");$("lgEn").classList.toggle("on",S.set.lang==="en");$("optB").checked=S.set.bugs;$("optW").checked=S.set.wx}
+function initSet(){
+ $("openSet").onclick=()=>{$("set").hidden=false;renderSet()};
+ $("lgUk").onclick=()=>{S.set.lang="uk";applySet();renderSet();render();save()};
+ $("lgEn").onclick=()=>{S.set.lang="en";applySet();renderSet();render();save()};
+ $("optB").onchange=e=>{S.set.bugs=e.target.checked;if(!S.set.bugs){S.bug=[];S.shield=[]}bagSig="";applySet();showTab("ups");render();save()};
+ $("optW").onchange=e=>{S.set.wx=e.target.checked;bagSig="";applySet();render();save()};
+ applySet();renderSet()}
+let last=Date.now(),saveT=0;
+function tick(){
+ const now=Date.now(),dt=Math.min(now-last,3000);last=now;
+ S.gens.forEach(q=>{q.t=q.t.map(x=>Math.max(0,x-dt))});
+ if(!S.unl&&S.total>=290){S.unl=true;S.wx={k:8,left:30000};flash(S.set.bugs&&S.set.wx?"🐛 Прийшли шкідники, а погода почала змінюватися! Купіть оприскування в магазині.":S.set.bugs?"🐛 Прийшли шкідники! Купіть оприскування в магазині.":S.set.wx?"🌦️ Погода почала змінюватися!":"")}if(S.unl){weather(dt);hazards(dt);pests(dt)}else if(S.wx.k!==8)S.wx={k:8,left:30000};growPlots(dt);contracts(dt);farmersWork(dt);render();
+ saveT+=dt;if(saveT>5000){saveT=0;save()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+buildStatic();initSet();render();setInterval(tick,100);
+</script>
+</body>
+</html>
